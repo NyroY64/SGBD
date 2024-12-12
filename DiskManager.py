@@ -20,26 +20,21 @@ class DiskManager:
                 os.makedirs(data_dir, exist_ok=True)
 
                 # Get a list of existing data files
-                files = [f for f in os.listdir(data_dir) if f.startswith('F') and f.endswith('.rsdb')]
+                files = [f for f in os.listdir(data_dir)]
                 if files:
                     # Extract file indices and find the last file index
-                    file_indices = [int(f[1:-5]) for f in files]
-                    last_file_idx = max(file_indices)
-                    last_file_name = f"F{last_file_idx}.rsdb"
+                    last_file_idx = int(files[len(files)-1][1])
+                    last_file_name = files[len(files)-1] 
                     last_file_path = os.path.join(data_dir, last_file_name)
     
                     # Calculate current number of pages in the last file
                     file_size = os.path.getsize(last_file_path)
-                    current_pages_in_file = file_size / self.dbc.pageSize
-                    current_pages_in_file = int(math.ceil(current_pages_in_file))
-                    
+                    current_pages_in_file = file_size // self.dbc.pageSize + 1
                     
                     # Check if the last file can accommodate a new page
-                    if current_pages_in_file < ( self.dbc.dm_maxfilesize // self.dbc.pageSize):
-
-
-                        with open(last_file_path, "ab") as file:
-                            file.close()
+                    if current_pages_in_file < self.dbc.dm_maxfilesize:
+                        #with open(last_file_path, "ab") as file:
+                        #    file.close()
                         # Return the new PageId
                         return PageId(last_file_idx, current_pages_in_file)
                     
@@ -65,10 +60,6 @@ class DiskManager:
             except Exception as e:
                 print(f"Error in AllocPage: {e}")
                 return None
-    
-                
-                
-            
         
     def DeallocPage (self,PageId):
         if PageId not in self.free_pages:
@@ -108,7 +99,6 @@ class DiskManager:
     def SaveState(self):
         data_dir = os.path.join(self.dbc.dbpath, "./DB_test/dm.save")
         os.makedirs(data_dir, exist_ok=True)
-        
         
         try:
             with open(f"./{self.dbc.dbpath}/dm.save", "wb") as fichier:

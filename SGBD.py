@@ -4,6 +4,7 @@ from DBManager import DBManager
 from ColInfo import ColInfo
 from Relation import Relation
 from DBConfig import DBConfig
+import struct
 import traceback
 
 class SGBD:
@@ -36,7 +37,14 @@ class SGBD:
             if(tableColi[1].startswith("VARCHAR")):
                 var = True
             cols.append(ColInfo(tableColi[0],tableColi[1]))
-        relation = Relation(nom,len(tableCol),cols,var,self.bufferManager,self.diskManager.AllocPage())
+        newPage = self.diskManager.AllocPage()
+        bufferHeader = self.bufferManager.GetPage(newPage)
+        self.bufferManager.buffer_pool[bufferHeader][20:24] = struct.pack("i", 0)
+        print(struct.unpack("i",self.bufferManager.buffer_pool[bufferHeader][20:24]))
+        self.bufferManager.FreePage(newPage,True)
+        bufferHeader = self.bufferManager.GetPage(newPage)
+        print(struct.unpack("i",self.bufferManager.buffer_pool[bufferHeader][20:24]))
+        relation = Relation(nom,len(tableCol),cols,var,self.bufferManager,newPage)
         self.dbManager.AddTableToCurrentDatabase(relation)
 
     def ProcessGetTableFromCurrentDatabaseCommand(self, cmd):
@@ -98,6 +106,8 @@ class SGBD:
                     print("Commande non reconnue :(")
             except Exception as e:
                 print(f"Erreur lors du traitement de la commande : {e}")
+                error_message = ''.join(traceback.format_exc())
+                print(error_message)
                 
 
 

@@ -16,7 +16,7 @@ class BufferManager:
     def GetPage(self, pageId):
         for i,buffer in enumerate(self.buffer_pool):
             if struct.unpack('i', buffer[:4])[0] == pageId.FileIdx and struct.unpack('i', buffer[4:8])[0] == pageId.PageIdx:
-                buffer[16:20]= (time.time() - self.epoch_difference)
+                buffer[16:20]= struct.pack('f', float((time.time() - self.epoch_difference)*1000)) 
                 return i
 
         for i,buffer in enumerate(self.buffer_pool):
@@ -65,7 +65,7 @@ class BufferManager:
 
     def FlushBuffers(self):
         for buffer in enumerate(self.buffer_pool):
-            self.freepage(buffer,buffer[12:16])
+            self.FreePage(buffer,buffer[12:16])
 
     def lru(self):
         indice = -1
@@ -92,16 +92,18 @@ class BufferManager:
         return indice 
 
     def FreePage(self, pageId, valdirty):
-        for i, (pid, buffer, pin_count, dirty_flag) in enumerate(self.buffer_pool):
+        for i in range(len(self.buffer_pool)):
+            fid = struct.unpack("i", self.buffer_pool[i][0:4])
+            ppid = struct.unpack("i", self.buffer_pool[i][4:8])
+            pid = PageId(fid, ppid)
+            pin_count = struct.unpack("i", self.buffer_pool[i][8:12])
+            valdirty = struct.unpack("i", self.buffer_pool[i][12:16])
             if pid == pageId:
                 if pin_count > 0:
                     pin_count -= 1
                 else:
-                    print("Erreur : pin_count déjà à zéro !")
+                    if valdirty:
+                        self.disk_manager.WritePage(pageId,self.buffer_pool[i])
 
-                if valdirty:
-                    dirty_flag = True
-
-                self.buffer_pool[i] = (pid, buffer, pin_count, dirty_flag)
+                self.buffer_pool[i] = (pid, self.buffer_pool[i], struct.unpack("i", self.buffer_pool[i][8:12]), struct.unpack("i", self.buffer_pool[i][12:16]))
                 return 
-

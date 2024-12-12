@@ -129,7 +129,7 @@ def readFromBuffer(self, record, buff, pos):
                     posRel1 += 4
                     index += 1
                 case "FLOAT":
-                    record[index] = struct.unpack('i', buff[posRel1:posRel1 + 4])[0]
+                    record[index] = struct.unpack('f', buff[posRel1:posRel1 + 4])[0]
                     posRel += 4
                     posRel1 += 4
                     index += 1
@@ -159,7 +159,8 @@ def addDataPage(self):
         headerPage = bufferManager.getPage(self.headerPageId)
         nb_pages = headerPage.read_int(0) or 0  # Si None, on initialise à 0
         nb_pages += 1
-        headerPage.write_int(0, nb_pages)
+        headerPage[20:24] = struct.pack("i", 0)
+        headerPage[24:28] = struct.pack("i", nb_pages)
 
         next_offset = 4 + (nb_pages - 1)*12
 
@@ -169,7 +170,7 @@ def addDataPage(self):
         headerPage.write_int(next_offset + 8, nb_octets_restant - 8)
 
         # Libération de la page d'en-tête
-        bufferManager.free_page(self.header_page_id, flush=True)
+        bufferManager.free_page(self.header_page_id, True)
 
         # Étape 4 : Préparation de la nouvelle page de données
         data_page = bufferManager.getPage(nouvelle_page)
@@ -177,8 +178,6 @@ def addDataPage(self):
         data_page.write_int(nb_octets_restant - 8, 0)
         bufferManager.FreePage(nouvelle_page, flush=True)
 
-        # Étape 5 : Flush des buffers
-        bufferManager.flush_buffers()
 
 
 def getFreeDataPageId(self, sizeRecord):
@@ -206,11 +205,11 @@ def getFreeDataPageId(self, sizeRecord):
             page = PageId(file_idx, page_idx)
 
             # Libérer la page d'en-tête
-            bufferManager.freePage(self.headerPageId, flush=False)
+            bufferManager.freePage(self.headerPageId,False)
             return page
 
     # Si aucune page ne convient, on libère la page d'en-tête et on retourne None
-    bufferManager.freePage(self.headerPageId, flush=False)
+    bufferManager.freePage(self.headerPageId,False)
     return None
 
 def writeRecordToDataPage(self, record, pageId):
@@ -350,3 +349,17 @@ def insertRecord(self, record):
 
     # Insérer le record dans la page de données et retourner son RecordId
     return self.writeRecordToDataPage(record, data_page)
+
+
+def getAllRecords(self):
+    liste_records = []
+
+    data_pages = self.getDataPages()
+
+    # Parcourir chaque page et extraire les enregistrements
+    for page_id in data_pages:
+        # Charger les enregistrements dans la page
+        records_in_page = self.getRecordsInDataPage(page_id)
+        liste_records.extend(records_in_page)
+
+    return liste_records
