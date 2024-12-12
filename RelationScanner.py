@@ -34,5 +34,7 @@ class RelationScanner(IRecordIterator):
         Libère les ressources associées au scanner.
         Dans cette implémentation, il n'y a pas de ressources spécifiques à libérer.
         """
-        self.records = []
-        self.current_index = 0
+        self.current_page_index = 0
+        self.current_record_index = 0
+        if self.data_pages:
+            self._load_page(self.data_pages[0])
