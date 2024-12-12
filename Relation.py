@@ -349,4 +349,17 @@ def insertRecord(self, record):
         data_page = self.getFreeDataPageId(taille_record)
 
     # Insérer le record dans la page de données et retourner son RecordId
-    return self.writeRecordToDataPage(record, data_page)
+    return self.writeRecordToDataPage(record, data_page) 
+
+def getAllRecords(self):
+    liste_records = []
+
+    data_pages = self.getDataPages()
+
+    # Parcourir chaque page et extraire les enregistrements
+    for page_id in data_pages:
+        # Charger les enregistrements dans la page
+        records_in_page = self.getRecordsInDataPage(page_id)
+        liste_records.extend(records_in_page)
+
+    return liste_records
