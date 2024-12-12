@@ -137,7 +137,7 @@ class SGBD:
                 columns.append(ColInfo(name, ColInfo.VarChar(size)))
         return columns
 
-    #TP 7 START GO GO GO
+        
     def processInsertCommand(self,reste: list[str]):
         # Récupérer la table de la base de données courante
             if reste[0].upper() == "INTO" and reste[2].upper() == "VALUES":
@@ -171,7 +171,70 @@ class SGBD:
                 print(f"Record inserted into table {reste[1]}.")
             else:
                 print("Invalid INSERT command.")
-                
+
+
+        def processInsertCommand(self, reste: list[str]):
+        if len(reste) < 3:
+            print("Invalid command format.")
+            return
+
+        # Vérifier si la commande commence par BULKINSERT
+        if reste[0].upper() == "BULKINSERT" and reste[1].upper() == "INTO":
+            table_name = reste[2]
+            csv_file = reste[3]
+
+            # Récupérer la table de la base de données courante
+            table = self.dbManager.GetTableFromCurrentDatabase(table_name)
+            if table is None:
+                print(f"Table {table_name} does not exist.")
+                return
+
+            try:
+                # Lire le fichier CSV
+                with open(csv_file, 'r', encoding='utf-8') as file:
+                    for line in file:
+                        # Supprimer les espaces et découper la ligne en valeurs
+                        values = [value.strip().strip('"') for value in line.split(',')]
+
+                        # Vérifier que le nombre de valeurs correspond au nombre de colonnes
+                        if len(values) != table.nb_column:
+                            print(f"Number of values does not match the number of columns in table {table_name}.")
+                            return
+
+                        # Convertir les valeurs en types appropriés
+                        typed_values = []
+                        for i, value in enumerate(values):
+                            column_type = table.columns[i].type
+                            try:
+                                if column_type == ColInfo.Int():
+                                    typed_values.append(int(value))
+                                elif column_type == ColInfo.Float():
+                                    typed_values.append(float(value))
+                                elif column_type == ColInfo.Char(column_type.size) and len(value) == column_type.size:
+                                    typed_values.append(value)
+                                elif column_type == ColInfo.VarChar(column_type.size) and len(
+                                        value) <= column_type.size:
+                                    typed_values.append(value)
+                                else:
+                                    print(f"Invalid column type for value '{value}' in column {i + 1}.")
+                                    return
+                            except ValueError as e:
+                                print(f"Error converting value '{value}' to type {column_type}: {e}")
+                                return
+
+                        # Insérer le tuple dans la table
+                        table.InsertRecord(typed_values)
+
+                print(f"Bulk insert into table {table_name} completed successfully.")
+
+            except FileNotFoundError:
+                print(f"CSV file {csv_file} not found.")
+
+            except Exception as e:
+                print(f"An error occurred during BULKINSERT: {e}")
+
+        else:
+            print("Invalid BULKINSERT command.")
 
 
 
