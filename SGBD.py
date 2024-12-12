@@ -108,6 +108,69 @@ class SGBD:
                 print(f"Erreur lors du traitement de la commande : {e}")
                 error_message = ''.join(traceback.format_exc())
                 print(error_message)
+
+
+        @staticmethod
+    def parseValues(columns_str: str) -> list[ColInfo]:
+        columns = []
+        column_parts = columns_str[1:-1].split(",")
+        for column_part in column_parts:
+            columns.append(column_part)
+
+        return columns
+
+    @staticmethod
+    def parseColumns(columns_str: str) -> list[ColInfo]:
+        columns = []
+        column_parts = columns_str[1:-1].split(",")
+        for column_part in column_parts:
+            name, type_str = column_part.split(":")
+            if type_str == "INT":
+                columns.append(ColInfo(name, ColInfo.Int()))
+            elif type_str == "REAL":
+                columns.append(ColInfo(name, ColInfo.Float()))
+            elif type_str.startswith("CHAR("):
+                size = int(type_str[5:-1])
+                columns.append(ColInfo(name, ColInfo.Char(size)))
+            elif type_str.startswith("VARCHAR("):
+                size = int(type_str[8:-1])
+                columns.append(ColInfo(name, ColInfo.VarChar(size)))
+        return columns
+
+    #TP 7 START GO GO GO
+    def processInsertCommand(self,reste: list[str]):
+        # Récupérer la table de la base de données courante
+            if reste[0].upper() == "INTO" and reste[2].upper() == "VALUES":
+                table = self.dbManager.GetTableFromCurrentDatabase(reste[1])
+                if table is None:
+                    print(f"Table {reste[1]} does not exist.")
+                    return
+                # Vérifier que le nombre de valeurs correspond au nombre de colonnes
+                values = self.parseValues(reste[3])
+                if len(values) != table.nb_column:
+                    print(f"Number of values does not match the number of columns in table {reste[1]}.")
+                    return
+                # Convertir les valeurs en types appropriés
+                typed_values = []
+                for i, value in enumerate(values):
+                    column_type = table.columns[i].type
+                    if column_type == ColInfo.Int():
+                        typed_values.append(int(value))
+                    elif column_type == ColInfo.Float():
+                        typed_values.append(float(value))
+                    elif column_type == ColInfo.Char(column_type.size) and len(value) == column_type.size:
+                        typed_values.append(value)
+                    elif column_type == ColInfo.VarChar(column_type.size) and len(value) <= column_type.size:
+                        typed_values.append(value)
+                    else:
+                        print("Invalid column type.")
+                        return
+                print(typed_values)
+                # Insérer le tuple dans la table
+                table.InsertRecord(typed_values)
+                print(f"Record inserted into table {reste[1]}.")
+            else:
+                print("Invalid INSERT command.")
                 
 
 
