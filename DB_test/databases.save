@@ -1,0 +1,48 @@
+{
+    "databases": {
+        "db": {
+            "tables": {
+                "t": {
+                    "columns": [
+                        {
+                            "colNom": "c",
+                            "colType": "INT"
+                        }
+                    ],
+                    "headerPageId": {
+                        "FileIdx": 5,
+                        "PageIdx": 0
+                    }
+                },
+                "tab2": {
+                    "columns": [
+                        {
+                            "colNom": "c",
+                            "colType": "CHAR(20)"
+                        }
+                    ],
+                    "headerPageId": {
+                        "FileIdx": 11,
+                        "PageIdx": 0
+                    }
+                }
+            }
+        },
+        "db2": {
+            "tables": {
+                "tab": {
+                    "columns": [
+                        {
+                            "colNom": "c2",
+                            "colType": "INT"
+                        }
+                    ],
+                    "headerPageId": {
+                        "FileIdx": 12,
+                        "PageIdx": 0
+                    }
+                }
+            }
+        }
+    }
+}
