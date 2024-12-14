@@ -1,3 +1,5 @@
+import IRecordIterator
+
 class ProjectOperator(IRecordIterator):
     def __init__(self, child, column_indices):
         """

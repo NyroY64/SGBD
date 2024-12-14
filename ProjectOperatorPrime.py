@@ -1,3 +1,6 @@
+import Record
+
+
 class ProjectOperatorPrime(IRecordIterator):
     def __init__(self, relation, column_indices, condition):
         """
