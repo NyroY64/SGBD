@@ -110,7 +110,7 @@ class SGBD:
                 print(error_message)
 
 
-        @staticmethod
+    @staticmethod
     def parseValues(columns_str: str) -> list[ColInfo]:
         columns = []
         column_parts = columns_str[1:-1].split(",")
@@ -173,7 +173,7 @@ class SGBD:
                 print("Invalid INSERT command.")
 
 
-        def processInsertCommand(self, reste: list[str]):
+    def processInsertCommand(self, reste: list[str]):
         if len(reste) < 3:
             print("Invalid command format.")
             return
@@ -232,7 +232,6 @@ class SGBD:
 
             except Exception as e:
                 print(f"An error occurred during BULKINSERT: {e}")
-
         else:
             print("Invalid BULKINSERT command.")
 
