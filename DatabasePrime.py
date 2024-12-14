@@ -33,21 +33,28 @@ class Database:
         self.tables = tables
         
         
-    def create_index(self, table_name, column_name, order):
-       """Crée un index B+Tree pour une table sur une colonne donnée."""
-       if table_name not in self.tables:
-           raise ValueError(f"La table {table_name} n'existe pas.")
-       if table_name not in self.indexes:
-           self.indexes[table_name] = {}
-       # Créer un B+Tree et insérer toutes les clés existantes
-       tree = BPTree(order=order)
-       for row_id, record in enumerate(self.tables[table_name]):
-           key = record[column_name]
-           tree.insert(key, row_id)  # Associer la clé à l'ID du record
-       self.indexes[table_name][column_name] = tree
-       print(f"Index créé sur {table_name}.{column_name} avec ordre {order}.")
-       
-    def get_index(self, table_name, column_name):
-        if table_name in self.indexes and column_name in self.indexes[table_name]:
-            return self.indexes[table_name][column_name]
-        raise ValueError(f"Index introuvable pour {table_name}.{column_name}.")
+    def create_index(self, relation, column, order):
+        """CREATEINDEX command."""
+        index_key = f"{relation}.{column}"
+        self.indices[index_key] = BPTree(order=order)
+        print(f"Index created for {relation} on column {column} with order {order}.")
+
+    def insert_record(self, relation, column, key, record_id):
+        """Insert a record into the specified index."""
+        index_key = f"{relation}.{column}"
+        if index_key in self.indices:
+            self.indices[index_key].insert(key, record_id)
+        else:
+            print(f"No index found for {relation} on column {column}.")
+
+    def select_index(self, relation, column, key):
+        """SELECTINDEX command."""
+        index_key = f"{relation}.{column}"
+        if index_key in self.indices:
+            result = self.indices[index_key].search(key)
+            if result:
+                print(f"Records with {column}={key}: {result}")
+            else:
+                print(f"No records found with {column}={key}.")
+        else:
+            print(f"No index found for {relation} on column {column}.")

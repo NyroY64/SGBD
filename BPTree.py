@@ -1,86 +1,86 @@
-import BPTreeNode
 from BPTreeNode import BPTreeNode
 
-
 class BPTree:
-    def __init__(self, order=3):
-        self.racine = BPTreeNode(is_feuille=True)  # L'arbre commence avec une feuille vide
-        self.order = order    
-        
-        
-    def insert(self, key, value):
-        root = self.racine
-        if len(root.keys) == (self.order - 1):  # Split root if full
-            new_racine = BPTreeNode(is_feuille=False)
-            new_racine.children.append(self.racine)
-            self.split_child(new_racine, 0, self.racine)
-            self.racine = new_racine
-        self.insert_non_full(self.racine, key, value)
+    def __init__(self, ordre=3):
+        self.ordre = ordre  # Ordre du B+Tree
+        self.racine = BPTreeNode(is_feuille=True)  # Le nœud racine est initialement une feuille
 
-    
-    def insert_non_full(self, node, key, value):
-        """Insert a key into a node that is not full."""
-        if node.is_feuille:
-            # Insert the key in the correct position
+    def inserer(self, cle, valeur):
+        """Insère une clé et sa valeur dans le B+Tree."""
+        racine = self.racine
+        if len(racine.keys) == (self.ordre - 1):  # Si la racine est pleine, il faut la fractionner
+            nouvelle_racine = BPTreeNode(is_feuille=False)  # Nouvelle racine qui n'est pas une feuille
+            nouvelle_racine.children.append(self.racine)  # L'ancienne racine devient un enfant
+            self.fractionner_enfant(nouvelle_racine, 0, self.racine)  # Fractionne l'ancienne racine
+            self.racine = nouvelle_racine  # Met à jour la racine
+        self._inserer_non_plein(self.racine, cle, valeur)
+
+    def _inserer_non_plein(self, noeud, cle, valeur):
+        """Insère une clé dans un nœud non plein."""
+        if noeud.is_feuille:
+            # Insérer dans une feuille
             i = 0
-            while i < len(node.keys) and key > node.keys[i]:
+            while i < len(noeud.keys) and cle > noeud.keys[i]:
                 i += 1
-            node.keys.insert(i, key)
-            node.children.insert(i, value)  # Children store the corresponding values for leaves
+            if i < len(noeud.keys) and noeud.keys[i] == cle:
+                # Ajouter la valeur à une clé existante
+                noeud.children[i].append(valeur)
+            else:
+                # Insérer une nouvelle clé et sa valeur
+                noeud.keys.insert(i, cle)
+                noeud.children.insert(i, [valeur])
         else:
-            # Find the child to insert the key into
-            i = len(node.keys) - 1
-            while i >= 0 and key < node.keys[i]:
+            # Insérer dans un nœud interne
+            i = len(noeud.keys) - 1
+            while i >= 0 and cle < noeud.keys[i]:
                 i -= 1
             i += 1
-            if len(node.children[i].keys) == (self.order - 1):  # If the child is full, split it
-                self.split_child(node, i, node.children[i])
-                # After the split, decide which of the two children to insert into
-                if key > node.keys[i]:
+            if len(noeud.children[i].keys) == (self.ordre - 1):  # Si l'enfant est plein, fractionne-le
+                self.fractionner_enfant(noeud, i, noeud.children[i])
+                if cle > noeud.keys[i]:
                     i += 1
-            self.insert_non_full(node.children[i], key, value)
-    
-    
-    def split_child(self, parent, index, child):
-        """Split a child node that is too full."""
-        if not child.keys:
-            raise ValueError("Cannot split a child node with an empty keys list.")
-    
-        # Create a new node for the split
-        new_node = BPTreeNode(is_feuille=child.is_feuille)
-        mid = len(child.keys) // 2
-    
-        # Save the middle key before modifying child.keys
-        middle_key = child.keys[mid]
-    
-        # Move keys and children from the child node to the new node
-        new_node.keys = child.keys[mid + 1:]  # Right half keys
-        new_node.children = child.children[mid + 1:]  # Right half children
-    
-        # Adjust the original child node
-        child.keys = child.keys[:mid]  # Left half keys
-        child.children = child.children[:mid + 1]  # Left half children
-    
-        # Insert the middle key into the parent
-        parent.keys.insert(index, middle_key)
-        parent.children.insert(index + 1, new_node)
+            self._inserer_non_plein(noeud.children[i], cle, valeur)
 
-
+    def fractionner_enfant(self, parent, index, enfant):
+        """F   ractionne un nœud plein en deux."""
+        if not enfant.keys:
+            raise ValueError("Impossible de fractionner un nœud avec une liste de clés vide.")
     
-    def search(self, key):
-        """Recherche une clé dans le B+Tree et renvoie sa valeur."""
-        return self._search(self.racine, key)
-
+        nouveau_noeud = BPTreeNode(is_feuille=enfant.is_feuille)
+        milieu = len(enfant.keys) // 2
     
-    def _search(self, node, key):
-        """Recherche récursive dans le noeud donné."""
-        if node.is_feuille:
-            if key in node.keys:
-                index = node.keys.index(key)
-                return node.children[index]
-            return None
+        # Enregistrer la clé médiane avant de modifier `enfant.keys`
+        cle_median = enfant.keys[milieu]
+    
+        # Transférer les clés et les enfants au nouveau nœud
+        nouveau_noeud.keys = enfant.keys[milieu + 1:]
+        enfant.keys = enfant.keys[:milieu]
+    
+        if enfant.is_feuille:
+            # Pour les feuilles, déplacer les enfants (valeurs)
+            nouveau_noeud.children = enfant.children[milieu + 1:]
+            enfant.children = enfant.children[:milieu]
         else:
-            i = 0
-            while i < len(node.keys) and key > node.keys[i]:
-                i += 1
-            return self._search(node.children[i], key)
+            # Pour les nœuds internes, déplacer les enfants
+            nouveau_noeud.children = enfant.children[milieu + 1:]
+            enfant.children = enfant.children[:milieu + 1]
+    
+        # Insérer la clé médiane dans le parent
+        parent.keys.insert(index, cle_median)
+        parent.children.insert(index + 1, nouveau_noeud)
+
+    def rechercher(self, cle):
+        """Recherche une clé dans le B+Tree et retourne ses valeurs associées."""
+        return self._rechercher(self.racine, cle)
+
+    def _rechercher(self, noeud, cle):
+        """Recherche récursive dans un nœud donné."""
+        i = 0
+        while i < len(noeud.keys) and cle > noeud.keys[i]:
+            i += 1
+        if i < len(noeud.keys) and cle == noeud.keys[i]:
+            if noeud.is_feuille:
+                return noeud.children[i]  # Retourne les valeurs associées
+        if noeud.is_feuille:
+            return None  # Clé non trouvée
+        return self._rechercher(noeud.children[i], cle)
