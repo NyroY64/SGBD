@@ -1,3 +1,4 @@
+import IRecordIterator
 class SelectOperator(IRecordIterator):
     #Filtrer les tuples en fonction d'une condition
     def __init__(self, child, condition):
